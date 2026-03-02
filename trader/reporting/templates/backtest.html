@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Backtest Report - {{ run_id }}{% endblock %}
+
+{% block header_title %}Backtest Report <span style="color:var(--text-muted); font-size:1.2rem; font-weight:normal;">#{{
+    run_id }}</span>{% endblock %}
+
+{% block content %}
+<!-- 요약 카드 -->
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">CAGR</div>
+        <div class="card-value {% if metrics.cagr_pct > 0 %}text-success{% else %}text-danger{% endif %}">
+            {{ metrics.cagr_pct | pct }}%
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Max Drawdown</div>
+        <div class="card-value text-danger">
+            -{{ metrics.max_drawdown_pct | pct }}%
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Profit Factor</div>
+        <div
+            class="card-value {% if metrics.profit_factor >= 1.5 %}text-success{% elif metrics.profit_factor < 1.0 %}text-danger{% endif %}">
+            {{ metrics.profit_factor | pct }}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Win Rate</div>
+        <div class="card-value">
+            {{ (metrics.win_rate * 100) | pct }}%
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Avg R-Multiple</div>
+        <div class="card-value">
+            {{ metrics.avg_r | pct }}R
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Total Trades</div>
+        <div class="card-value">{{ metrics.total_trades }} <span
+                style="font-size:0.9rem; font-weight:normal; color:#64748b;">( {{ metrics.trades_per_year | pct }} / yr
+                )</span></div>
+    </div>
+</div>
+
+<!-- 차트 -->
+<div class="section">
+    <div class="section-title">Performance Charts</div>
+    <div class="charts-container">
+        <div class="chart-wrapper">
+            <img src="equity_curve.png" alt="Equity Curve">
+        </div>
+        <div class="chart-wrapper">
+            <img src="drawdown.png" alt="Drawdown">
+        </div>
+    </div>
+</div>
+
+<!-- 월별 수익 테이블 -->
+{% if monthly_returns %}
+<div class="section">
+    <div class="section-title">Monthly Returns</div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th class="text-right">Return (%)</th>
+                    <th class="text-right">Trades Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in monthly_returns %}
+                <tr>
+                    <td>{{ row.month }}</td>
+                    <td
+                        class="text-right {% if row.return_pct > 0 %}text-success{% elif row.return_pct < 0 %}text-danger{% endif %}">
+                        {{ row.return_pct | pct }}%
+                    </td>
+                    <td class="text-right">{{ row.trades }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- 거래 내역 (최근 N개) -->
+<div class="section">
+    <div class="section-title">Trades List (Last {{ trades | length }} of {{ total_trades_count }})</div>
+    {% if trades %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Entry Date</th>
+                    <th>Exit Date</th>
+                    <th>Qty</th>
+                    <th class="text-right">PnL (KRW)</th>
+                    <th class="text-right">R-Multiple</th>
+                    <th>Exit Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in trades %}
+                <tr>
+                    <td style="font-family: monospace;">{{ t.ticker }}</td>
+                    <td>{{ t.entry_date }}</td>
+                    <td>{{ t.exit_date }}</td>
+                    <td>{{ t.size|krw }}</td>
+                    <td class="text-right {% if t.pnl > 0 %}text-success{% elif t.pnl < 0 %}text-danger{% endif %}">
+                        {{ t.pnl | krw }}
+                    </td>
+                    <td class="text-right {% if t.pnl_r > 0 %}text-success{% elif t.pnl_r < 0 %}text-danger{% endif %}">
+                        {{ t.pnl_r | pct }}R
+                    </td>
+                    <td>
+                        <span
+                            class="badge {% if t.exit_reason == 'tp1' %}badge-success{% elif t.exit_reason == 'sl' or 'gap_sl' in t.exit_reason %}badge-danger{% else %}badge-info{% endif %}">
+                            {{ t.exit_reason }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">
+        * 전체 거래 내역은 동일 디렉토리의 <a href="trades.csv" style="color:var(--primary);">trades.csv</a> 를 참고하세요.
+    </div>
+    {% else %}
+    <div>No trades recorded.</div>
+    {% endif %}
+</div>
+
+<!-- 전략 설정 요약 -->
+<div class="section">
+    <div class="section-title">Configuration Summary</div>
+    <pre class="config-pre">
+Universe:
+  Market: {{ config.universe.market }} (min_listed_days: {{ config.universe.min_listed_days }}, min_value: {{ config.universe.min_value_krw | krw }})
+Strategy:
+  Score Threshold: {{ config.strategy.score_threshold }}
+  Confirmation: {{ config.strategy.confirmation }}
+  Trend Filter: {{ config.strategy.trend_filter }}
+Indicators:
+  ATR Period: {{ config.indicators.atr_period }}, BAND Multiplier: {{ config.indicators.band_atr_mult }}
+Risk:
+  Risk per Trade: {{ (config.risk.risk_pct_per_trade * 100) | pct }}%
+  Max Positions: {{ config.risk.max_positions }}
+  Daily Stop (R): {{ config.risk.daily_stop_R }}
+EV Gate Enabled: {{ config.ev_gate.enabled }}
+    </pre>
+</div>
+{% endblock %}

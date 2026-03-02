@@ -1,0 +1,9 @@
+*.py[cod]
+__pycache__/
+.pytest_cache/
+.env
+.venv/
+data/cache/
+reports/
+results/
+orders/

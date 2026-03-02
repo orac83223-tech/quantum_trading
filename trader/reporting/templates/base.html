@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Quantum Report{% endblock %}</title>
+    <style>
+        {
+            % include "../assets/style.css" %
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>{% block header_title %}Quantum Report{% endblock %}</h1>
+            </div>
+            <div class="timestamp">
+                생성일시: {{ generated_at }}
+            </div>
+        </header>
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,49 @@
+# config.yaml — Quantum–Gann Confluence v1
+universe:
+  market: KOSDAQ
+  min_listed_days: 250
+  min_value_krw: 5_000_000_000
+  min_price: 1000
+  exclude_list: []
+
+indicators:
+  atr_period: 14
+  band_atr_mult: 0.25
+  pivot_bars: 3
+  so9_angles: [45, 90, 135, 180, 270, 360]
+  so9_k_cycles: [0, 1]
+  time_bars: [45, 90, 135, 180, 270, 360]
+  time_window: 5
+  gann_scale_n: 90
+  gann_penalty_fraction: 0.5
+
+strategy:
+  score_threshold: 2
+  confirmation: sma5            # sma5 | prev_high
+  trend_filter: sma200          # sma200 | sma50 | none
+  use_qpl_confluence: false     # v1: OFF
+  use_breakout_retest: false    # v1: OFF
+  sl_atr_mult: 1.0
+  tp1_ratio: 0.5
+  time_stop_bars: 45
+
+ev_gate:
+  enabled: true
+  lookback_bars: 700
+  success_bars: 45
+  cost_buffer_pct: 0.005
+
+risk:
+  risk_pct_per_trade: 0.005
+  max_positions: 10
+  daily_stop_R: 2
+  cost_roundtrip: 0.005
+  slippage: 0.001
+
+broker:
+  default: csv                  # csv | mock
+  output_dir: orders/
+
+data:
+  cache_dir: data/cache
+  source: pykrx
